@@ -1,0 +1,63 @@
+{
+  "name": "conductor-sync",
+  "version": "0.1.0",
+  "description": "Reliable QuickBooks Desktop sync and write-back on the conductor-node SDK: edit-sequence (3200) conflict recovery, incremental CDC, a durable queue, and an offline mock client.",
+  "keywords": [
+    "conductor",
+    "conductor-node",
+    "quickbooks",
+    "quickbooks-desktop",
+    "qbd",
+    "sync",
+    "edit-sequence",
+    "optimistic-concurrency",
+    "mock"
+  ],
+  "license": "MIT",
+  "author": "Visidex (https://visidex.com)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/visidexagency/conductor-sync"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "example": "tsx examples/sync-sales-orders.ts"
+  },
+  "peerDependencies": {
+    "conductor-node": ">=14"
+  },
+  "peerDependenciesMeta": {
+    "conductor-node": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "conductor-node": "^14.21.0",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
