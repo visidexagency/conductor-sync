@@ -143,6 +143,7 @@ All exports come from the package root (`conductor-sync`).
 | `unwrapConductorError(err)` | Pull the Conductor error envelope out of a thrown SDK error (or `null`). |
 | `classifyConductorError(err)` | Classify a failure as `"transient"` or `"permanent"` for a retry queue. |
 | `runIncrementalSync(opts)` | Resumable change-data-capture with a persisted watermark plus deletions. |
+| `stableHash(value)` | Stable content hash; skip records whose content didn't actually change. |
 | `processQueue(opts)` | Drain a durable write-back queue: retry transient, dead-letter permanent. |
 | `expBackoff(attempt, opts)` | Capped exponential backoff (QBD-tuned defaults). |
 | `CursorStore` / `InMemoryCursorStore` | Watermark persistence contract plus in-memory impl. |

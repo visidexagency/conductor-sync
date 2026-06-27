@@ -12,6 +12,8 @@ export {
   type ConductorErrorClass,
 } from "./classify";
 
+export { stableHash } from "./content-hash";
+
 // Sync engine
 export { expBackoff, type BackoffOptions } from "./sync/backoff";
 export { InMemoryCursorStore, type CursorStore } from "./sync/cursor-store";
