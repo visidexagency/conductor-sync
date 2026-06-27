@@ -18,6 +18,7 @@ import {
   withStaleRevisionRetry,
   runIncrementalSync,
   processQueue,
+  stableHash,
   InMemoryCursorStore,
   InMemoryQueueStore,
   type MockSalesOrder,
@@ -28,20 +29,35 @@ async function main() {
     salesOrders: [order("so-1", "SO-1001"), order("so-2", "SO-1002")],
   });
 
-  // 1. Incremental pull. The cursor persists between runs, so a second run with
-  //    no changes pulls nothing. `listDeleted` plugs in the same way against the
-  //    real deleted-transactions endpoint.
-  const local = new Map<string, string>(); // id -> refNumber (stand-in for your DB)
+  // 1. Incremental pull. We store a content hash per record so a record whose
+  //    content didn't actually change gets skipped: QuickBooks bumps updatedAt
+  //    on cosmetic re-saves, so a pull can hand you the same record twice.
+  //    (listUpdated returns everything each run here for simplicity; in
+  //    production you'd pass updatedAfter. listDeleted plugs in the same way.)
+  const local = new Map<string, { refNumber: string; hash: string }>();
   const cursorStore = new InMemoryCursorStore();
+  let applied = 0;
 
-  const pull = await runIncrementalSync({
-    key: "sales-orders",
-    cursorStore,
-    listUpdated: async () => (await conductor.qbd.salesOrders.list()).data,
-    getUpdatedAt: (so) => so.updatedAt,
-    onRecord: async (so) => void local.set(so.id, so.refNumber ?? so.id),
-  });
-  console.log(`1. pulled ${pull.processed} orders:`, [...local.values()].join(", "));
+  const pull = () =>
+    runIncrementalSync({
+      key: "sales-orders",
+      cursorStore,
+      listUpdated: async () => (await conductor.qbd.salesOrders.list()).data,
+      getUpdatedAt: (so) => so.updatedAt,
+      onRecord: async (so) => {
+        const hash = stableHash({ refNumber: so.refNumber, memo: so.memo, lines: so.lines });
+        if (local.get(so.id)?.hash === hash) return; // unchanged: skip downstream work
+        local.set(so.id, { refNumber: so.refNumber ?? so.id, hash });
+        applied++;
+      },
+    });
+
+  applied = 0;
+  await pull();
+  console.log(`1. first pull applied ${applied} orders:`, [...local.values()].map((v) => v.refNumber).join(", "));
+  applied = 0;
+  await pull();
+  console.log(`   second pull applied ${applied} (unchanged records skipped via stableHash)`);
 
   // 2 + 3. Write a memo back through the durable queue. We arm a concurrent
   //    edit on so-1, so its first write hits a 3200; withStaleRevisionRetry
